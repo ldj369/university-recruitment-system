@@ -285,7 +285,6 @@ npm run init-db
 npm run reset-db
 ```
 
-```
 
 ## 开发说明
 
