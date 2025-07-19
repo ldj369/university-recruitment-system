@@ -1,8 +1,9 @@
-# 招聘系统使用说明
+# 高校招聘系统使用说明
 
 ## 项目概述
 
 这是一个基于 Vue 3 + Express.js 的在线招聘系统，主要面向应聘者使用。系统提供简历管理、岗位浏览、在线投递等功能。
+（特别提醒。这是供应聘者使用的，管理员后端以及管理员界面共用一个数据库，有需要联系开发人员 QQ：2899520289）
 
 ## 技术架构
 
@@ -217,102 +218,6 @@ npm run dev
 3. 查看岗位详情（职位描述、要求等）
 4. 点击"投递简历"完成在线投递
 
-## 数据库结构
-
-### 数据表详细说明
-
-#### 1. departments - 部门表
-```sql
-CREATE TABLE departments (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name VARCHAR(255) NOT NULL COMMENT '部门名称'
-);
-```
-
-#### 2. positions - 岗位表
-```sql
-CREATE TABLE positions (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name VARCHAR(255) NOT NULL COMMENT '岗位名称',
-  content TEXT COMMENT '岗位描述',
-  requirement TEXT COMMENT '岗位要求',
-  recruit_count INTEGER COMMENT '招聘人数',
-  department_id INTEGER NOT NULL COMMENT '所属部门ID',
-  is_closed BOOLEAN DEFAULT FALSE COMMENT '是否关闭招聘',
-  created_at DATETIME,
-  updated_at DATETIME,
-  FOREIGN KEY (department_id) REFERENCES departments(id)
-);
-```
-
-#### 3. applicants - 应聘者表
-```sql
-CREATE TABLE applicants (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name VARCHAR(255) NOT NULL COMMENT '姓名',
-  gender VARCHAR(10) NOT NULL COMMENT '性别',
-  birth_date VARCHAR(20) COMMENT '出生日期',
-  birth_place VARCHAR(255) COMMENT '出生地',
-  marital_status VARCHAR(20) COMMENT '婚姻状况',
-  id_card VARCHAR(18) NOT NULL COMMENT '身份证号',
-  political_status VARCHAR(50) COMMENT '政治面貌',
-  professional_title VARCHAR(100) COMMENT '专业技术职务',
-  highest_degree VARCHAR(50) COMMENT '最高学位',
-  highest_education VARCHAR(50) COMMENT '最高学历',
-  phone VARCHAR(20) COMMENT '联系电话',
-  email VARCHAR(255) COMMENT '邮箱',
-  photo VARCHAR(255) COMMENT '照片文件名',
-  family_members TEXT COMMENT '家庭成员信息(JSON)',
-  education_history TEXT COMMENT '教育经历(JSON)',
-  work_history TEXT COMMENT '工作经历(JSON)',
-  academic_achievements TEXT COMMENT '学术成果(JSON)',
-  attachments TEXT COMMENT '附件信息(JSON)',
-  status VARCHAR(20) DEFAULT 'active' COMMENT '状态',
-  created_at DATETIME,
-  updated_at DATETIME
-);
-```
-
-#### 4. applicant_positions - 投递记录表
-```sql
-CREATE TABLE applicant_positions (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  applicant_id INTEGER NOT NULL COMMENT '应聘者ID',
-  position_id INTEGER NOT NULL COMMENT '岗位ID',
-  created_at DATETIME,
-  updated_at DATETIME,
-  FOREIGN KEY (applicant_id) REFERENCES applicants(id),
-  FOREIGN KEY (position_id) REFERENCES positions(id)
-);
-```
-
-#### 5. attachments - 附件表
-```sql
-CREATE TABLE attachments (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  file_path VARCHAR(500) NOT NULL COMMENT '文件路径',
-  file_name VARCHAR(255) NOT NULL COMMENT '文件名',
-  mime_type VARCHAR(100) COMMENT '文件类型',
-  size INTEGER COMMENT '文件大小',
-  uploader_id INTEGER COMMENT '上传者ID',
-  remark VARCHAR(255) COMMENT '备注',
-  created_at DATETIME,
-  updated_at DATETIME,
-  FOREIGN KEY (uploader_id) REFERENCES applicants(id)
-);
-```
-
-#### 6. users - 管理员用户表
-```sql
-CREATE TABLE users (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name VARCHAR(255) NOT NULL COMMENT '用户名',
-  alias VARCHAR(255) COMMENT '别名',
-  password VARCHAR(255) NOT NULL COMMENT '密码',
-  department_id INTEGER NOT NULL COMMENT '所属部门ID',
-  FOREIGN KEY (department_id) REFERENCES departments(id)
-);
-```
 
 ### 表关系说明
 - **部门 ↔ 岗位**: 一对多关系（一个部门可以有多个岗位）
@@ -380,28 +285,6 @@ npm run init-db
 npm run reset-db
 ```
 
-#### 自定义初始数据
-如需修改初始数据，可以编辑 `backend/init-database.js` 文件：
-
-```javascript
-// 修改部门数据
-const departments = await Department.bulkCreate([
-  { name: '你的部门名称' },
-  // 添加更多部门...
-]);
-
-// 修改岗位数据
-const positions = await Position.bulkCreate([
-  {
-    name: '你的岗位名称',
-    content: '岗位描述',
-    requirement: '岗位要求',
-    recruitCount: 1,
-    departmentId: departments[0].id,
-    isClosed: false
-  },
-  // 添加更多岗位...
-]);
 ```
 
 ## 开发说明
@@ -432,4 +315,4 @@ const positions = await Position.bulkCreate([
 
 ## 联系支持
 
-如有技术问题或使用疑问，请联系开发团队。
+如有技术问题或使用疑问，请联系开发者。qq：2899520289
