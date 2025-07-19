@@ -111,7 +111,50 @@ const config = {
 - `email.auth.pass`: 邮箱的授权码（不是密码）
 - `rootdir`: 文件上传存储目录，需要确保目录存在且有写权限
 
-### 4. 启动服务
+### 4. 数据库初始化
+
+系统使用 SQLite 数据库，首次启动时会自动创建数据库文件和表结构。
+
+#### 数据库文件位置
+- 数据库文件：`backend/data/database.sqlite`
+- 系统会自动创建 `backend/data` 目录（如果不存在）
+
+#### 自动初始化
+当首次启动后端服务时，Sequelize ORM 会自动：
+1. 创建数据库文件（如果不存在）
+2. 根据模型定义创建所有数据表
+3. 建立表之间的关联关系
+
+#### 使用初始化脚本
+项目提供了专门的数据库初始化脚本 `backend/init-database.js`，可以自动创建表结构并添加基础数据：
+
+```bash
+# 方法1：使用npm脚本（推荐）
+cd backend
+npm run init-db
+
+# 方法2：直接运行初始化脚本
+cd backend
+node init-database.js
+
+# 方法3：重置数据库（删除现有数据库文件并重新初始化）
+cd backend
+npm run reset-db
+```
+
+**初始化脚本功能：**
+- 自动创建数据库文件和表结构
+- 添加5个基础部门（技术部、人事部、市场部、财务部、运营部）
+- 添加7个示例岗位（前端工程师、后端工程师等）
+- 创建2个管理员用户账号
+- 智能检测，避免重复初始化
+
+**初始化后的数据：**
+- 部门：技术部、人事部、市场部、财务部、运营部
+- 岗位：前端工程师、后端工程师、全栈工程师、人事专员、市场推广专员、财务会计、产品运营
+- 管理员：admin（密码：admin123）、hr_manager（密码：hr123）
+
+### 5. 启动服务
 
 #### 启动后端服务
 ```bash
@@ -121,6 +164,12 @@ npm start
 npm run dev
 ```
 后端服务将在 http://localhost:3001 启动
+
+**首次启动注意事项：**
+- 系统会自动创建 `backend/data` 目录
+- 自动生成 `database.sqlite` 数据库文件
+- 自动创建所有必要的数据表
+- 控制台会显示数据库连接和表创建的日志信息
 
 #### 启动前端服务
 ```bash
@@ -170,12 +219,106 @@ npm run dev
 
 ## 数据库结构
 
-### 主要数据表
-- **applicants**: 应聘者信息表
-- **positions**: 岗位信息表
-- **departments**: 部门信息表
-- **applicant_positions**: 投递记录表（多对多关联）
-- **attachments**: 附件信息表
+### 数据表详细说明
+
+#### 1. departments - 部门表
+```sql
+CREATE TABLE departments (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name VARCHAR(255) NOT NULL COMMENT '部门名称'
+);
+```
+
+#### 2. positions - 岗位表
+```sql
+CREATE TABLE positions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name VARCHAR(255) NOT NULL COMMENT '岗位名称',
+  content TEXT COMMENT '岗位描述',
+  requirement TEXT COMMENT '岗位要求',
+  recruit_count INTEGER COMMENT '招聘人数',
+  department_id INTEGER NOT NULL COMMENT '所属部门ID',
+  is_closed BOOLEAN DEFAULT FALSE COMMENT '是否关闭招聘',
+  created_at DATETIME,
+  updated_at DATETIME,
+  FOREIGN KEY (department_id) REFERENCES departments(id)
+);
+```
+
+#### 3. applicants - 应聘者表
+```sql
+CREATE TABLE applicants (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name VARCHAR(255) NOT NULL COMMENT '姓名',
+  gender VARCHAR(10) NOT NULL COMMENT '性别',
+  birth_date VARCHAR(20) COMMENT '出生日期',
+  birth_place VARCHAR(255) COMMENT '出生地',
+  marital_status VARCHAR(20) COMMENT '婚姻状况',
+  id_card VARCHAR(18) NOT NULL COMMENT '身份证号',
+  political_status VARCHAR(50) COMMENT '政治面貌',
+  professional_title VARCHAR(100) COMMENT '专业技术职务',
+  highest_degree VARCHAR(50) COMMENT '最高学位',
+  highest_education VARCHAR(50) COMMENT '最高学历',
+  phone VARCHAR(20) COMMENT '联系电话',
+  email VARCHAR(255) COMMENT '邮箱',
+  photo VARCHAR(255) COMMENT '照片文件名',
+  family_members TEXT COMMENT '家庭成员信息(JSON)',
+  education_history TEXT COMMENT '教育经历(JSON)',
+  work_history TEXT COMMENT '工作经历(JSON)',
+  academic_achievements TEXT COMMENT '学术成果(JSON)',
+  attachments TEXT COMMENT '附件信息(JSON)',
+  status VARCHAR(20) DEFAULT 'active' COMMENT '状态',
+  created_at DATETIME,
+  updated_at DATETIME
+);
+```
+
+#### 4. applicant_positions - 投递记录表
+```sql
+CREATE TABLE applicant_positions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  applicant_id INTEGER NOT NULL COMMENT '应聘者ID',
+  position_id INTEGER NOT NULL COMMENT '岗位ID',
+  created_at DATETIME,
+  updated_at DATETIME,
+  FOREIGN KEY (applicant_id) REFERENCES applicants(id),
+  FOREIGN KEY (position_id) REFERENCES positions(id)
+);
+```
+
+#### 5. attachments - 附件表
+```sql
+CREATE TABLE attachments (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  file_path VARCHAR(500) NOT NULL COMMENT '文件路径',
+  file_name VARCHAR(255) NOT NULL COMMENT '文件名',
+  mime_type VARCHAR(100) COMMENT '文件类型',
+  size INTEGER COMMENT '文件大小',
+  uploader_id INTEGER COMMENT '上传者ID',
+  remark VARCHAR(255) COMMENT '备注',
+  created_at DATETIME,
+  updated_at DATETIME,
+  FOREIGN KEY (uploader_id) REFERENCES applicants(id)
+);
+```
+
+#### 6. users - 管理员用户表
+```sql
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name VARCHAR(255) NOT NULL COMMENT '用户名',
+  alias VARCHAR(255) COMMENT '别名',
+  password VARCHAR(255) NOT NULL COMMENT '密码',
+  department_id INTEGER NOT NULL COMMENT '所属部门ID',
+  FOREIGN KEY (department_id) REFERENCES departments(id)
+);
+```
+
+### 表关系说明
+- **部门 ↔ 岗位**: 一对多关系（一个部门可以有多个岗位）
+- **部门 ↔ 用户**: 一对多关系（一个部门可以有多个管理员用户）
+- **应聘者 ↔ 岗位**: 多对多关系（通过 applicant_positions 中间表）
+- **应聘者 ↔ 附件**: 一对多关系（一个应聘者可以上传多个附件）
 
 ## API 接口
 
@@ -215,6 +358,51 @@ npm run dev
 - 检查Token是否过期（默认7天）
 - 清除浏览器缓存重新登录
 - 检查后端服务是否正常运行
+
+### 4. 数据库相关问题
+- **数据库文件无法创建**: 检查 `backend/data` 目录权限
+- **表结构错误**: 删除 `database.sqlite` 文件重新启动服务
+- **数据丢失**: 检查数据库文件是否存在于 `backend/data/database.sqlite`
+- **连接失败**: 确认 SQLite 依赖已正确安装
+
+### 5. 数据库初始化详细说明
+
+#### 初始化脚本位置
+- 文件路径：`backend/init-database.js`
+- 这是一个完整的数据库初始化脚本，包含表创建和基础数据添加
+
+#### 可用的初始化命令
+```bash
+# 初始化数据库（保留现有数据）
+npm run init-db
+
+# 重置数据库（删除现有数据库文件，重新创建）
+npm run reset-db
+```
+
+#### 自定义初始数据
+如需修改初始数据，可以编辑 `backend/init-database.js` 文件：
+
+```javascript
+// 修改部门数据
+const departments = await Department.bulkCreate([
+  { name: '你的部门名称' },
+  // 添加更多部门...
+]);
+
+// 修改岗位数据
+const positions = await Position.bulkCreate([
+  {
+    name: '你的岗位名称',
+    content: '岗位描述',
+    requirement: '岗位要求',
+    recruitCount: 1,
+    departmentId: departments[0].id,
+    isClosed: false
+  },
+  // 添加更多岗位...
+]);
+```
 
 ## 开发说明
 

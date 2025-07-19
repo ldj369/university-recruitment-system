@@ -5,7 +5,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node applicant-server.js",
-    "dev": "node applicant-server.js"
+    "dev": "node applicant-server.js",
+    "init-db": "node init-database.js",
+    "reset-db": "rm -f data/database.sqlite && node init-database.js"
   },
   "author": "",
   "license": "ISC",
